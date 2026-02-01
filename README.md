@@ -15,8 +15,9 @@ Interface web simple (HTML / CSS / JS)
 
 Sauvegarde des suggestions générées (JSON horodaté)
 
+```text
+
 steam_agent/
-│
 ├── main.py                      # Point d'entrée
 ├── config.py                    # Configuration centralisée
 ├── config_local.py.example      # Template de configuration
@@ -25,6 +26,7 @@ steam_agent/
 ├── .gitignore
 │
 ├── api/                         # API REST
+│   ├── __init__.py
 │   ├── models.py                # Modèles Pydantic
 │   ├── steam_routes.py
 │   ├── protondb_routes.py
@@ -33,6 +35,7 @@ steam_agent/
 │   └── suggestions_routes.py
 │
 ├── services/                    # Logique métier
+│   ├── __init__.py
 │   ├── cache_service.py
 │   ├── steam_service.py
 │   ├── protondb_service.py
@@ -41,8 +44,10 @@ steam_agent/
 │   └── suggestions_service.py
 │
 ├── static/
-│   ├── css/style.css
-│   └── js/app.js
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       └── app.js
 │
 ├── templates/
 │   └── index.html
@@ -53,4 +58,4 @@ steam_agent/
 │
 └── suggestions/                 # Suggestions sauvegardées
     └── *.json
-
+```
