@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Configuration locale (contient des clés sensibles)
+config_local.py
+
+# Cache et données
+cache/
+*.json
+!requirements.txt
+
+# Suggestions sauvegardées (données utilisateur)
+suggestions/
+*.log
+
+# Fichiers temporaires
+*.tmp
+*.bak
+.cache/

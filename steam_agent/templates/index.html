@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steam Deck Agent</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="grid-bg"></div>
+    <div class="container">
+        <div class="header">
+            <h1>Marc Perso SteamDeck Agent</h1>
+            <p style="text-align:center; opacity:0.6">Suggestions nouveautés et Backlog de jeux</p>
+            <p style="text-align:center; opacity:0.6">Exporte la librairie et demande à un LLM de ton choix les suggestions de nouveaux jeux ou ceux que tu as déjà, mais joués moins de 10h</p>
+        </div>
+
+        <div class="search-container">
+            <div style="display: flex; gap: 15px;">
+                <input type="text" id="steamInput" style="flex:2" placeholder="ID Steam (vide pour garder le tien par défaut)">
+                <button onclick="loadLibrary()">CHARGER</button>
+            </div>
+            
+            <div id="actionButtons" style="display: none; margin-top: 15px; gap: 10px; display: flex; flex-wrap: wrap;">
+                <button class="btn-prompt" onclick="generatePrompt('new')">🆕 Nouveaux jeux</button>
+                <button class="btn-play" onclick="generatePrompt('backlog')">🎮 Jeux déjà à jouer</button>
+                <button class="btn-export" onclick="exportJSON()">💾 EXPORT JSON</button>
+                <button class="btn-clear" onclick="clearSuggestions()">🗑️ Vider SUGGESTIONS</button>
+            </div>
+            
+            <div id="askAnythingSection" style="display: none; margin-top: 20px; padding: 20px; background: rgba(255, 200, 100, 0.1); border-radius: 15px; border: 1px solid rgba(255, 200, 100, 0.3);">
+                <h4 style="color: #fbbf24; margin-bottom: 10px;">💬 Ask Anything</h4>
+                <textarea id="askAnythingInput" placeholder="Exemple : A quel jeu RPG j'ai joué le plus et que me conseilles-tu ensuite dans ma bibliothèque ?" style="height: 60px; margin-bottom: 10px;"></textarea>
+                <button class="btn-ask-anything" onclick="askAnything()" style="width: 100%; background: linear-gradient(45deg, #f59e0b, #fbbf24);">🚀 POSER LA QUESTION</button>
+            </div>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="useLocalLLM" onchange="toggleLLMMode()">
+                <label for="useLocalLLM">🤖 Utiliser LLM local (Ollama)</label>
+            </div>
+            
+            <div id="llmConfig" class="llm-config">
+                <input type="text" id="ollamaUrl" placeholder="URL Ollama (ex: http://localhost:11434)" value="http://localhost:11434">
+                <input type="text" id="ollamaModel" placeholder="Modèle (ex: llama3.2, mistral)" value="llama3.2">
+            </div>
+
+            <div class="controls">
+                <input type="text" id="filterName" placeholder="🔍 Rechercher..." oninput="renderGames()">
+                
+                <select id="filterProton" onchange="renderGames()">
+                    <option value="all">Compatibilité SteamDeck Tout ProtonDB</option>
+                    <option value="platinum">Platinum</option>
+                    <option value="gold">Gold</option>
+                    <option value="silver">Silver</option>
+                    <option value="bronze">Bronze</option>
+                    <option value="borked">Borked</option>
+                    <option value="unknown">Inconnu</option>
+                </select>
+
+                <select id="filterGenre" onchange="renderGames()">
+                    <option value="all">🎮 Tous les genres</option>
+                </select>
+
+                <select id="sortOrder" onchange="renderGames()">
+                    <option value="name">Nom (A-Z)</option>
+                    <option value="playtime">Temps de jeu</option>
+                </select>
+                
+                <div id="status" style="display:flex; align-items:center; justify-content:center; color:#00ff88; font-weight:bold; font-size:0.9em"></div>
+            </div>
+        </div>
+
+        <div id="promptBox" class="prompt-area">
+            <h4>Prompt copié !</h4>
+            <textarea id="promptTextarea" readonly></textarea>
+        </div>
+
+        <div id="results" class="game-grid"></div>
+
+        <div class="search-container" style="margin-top: 50px; border: 1px dashed #6366f1;">
+            <h3>Import Suggestion LLM</h3>
+            <textarea id="llmInput" placeholder='Collez le JSON ici...'></textarea>
+            <button onclick="importLLM()" style="margin-top:15px; width: 100%;">AFFICHER LES SUGGESTIONS IA</button>
+            <button id="saveBtn" onclick="saveCurrentSuggestions()" style="flex: 1; background: #00ff88; color: #000; display: none;">SAUVEGARDER</button>
+            <button onclick="clearImport()" style="flex: 1; background: #4a5568;">NETTOYER</button>
+        </div>
+
+        <div class="search-container" style="margin-top: 20px; border: 1px solid #6366f1;">
+            <h3 style="margin-bottom: 15px;">📜 Historique des Suggestions</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4 style="color: #6366f1; margin-bottom: 10px;">🆕 Nouveautés</h4>
+                    <select id="select-nouveautes" style="width: 100%; margin-bottom: 10px;">
+                        <option value="">Aucune sauvegarde</option>
+                    </select>
+                    <button onclick="loadFromHistory('nouveautes')" style="width: 100%; background: #6366f1;">Charger</button>
+                </div>
+                <div>
+                    <h4 style="color: #f59e0b; margin-bottom: 10px;">🎮 Backlog</h4>
+                    <select id="select-backlog" style="width: 100%; margin-bottom: 10px;">
+                        <option value="">Aucune sauvegarde</option>
+                    </select>
+                    <button onclick="loadFromHistory('backlog')" style="width: 100%; background: #f59e0b;">Charger</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
