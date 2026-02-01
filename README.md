@@ -1,45 +1,56 @@
 # steam_personnal_agent
 this interface retrieves your steam library, ask protondb for steamdeck compatibility and steamspy for metadata
 
+Récupération de la bibliothèque Steam d’un utilisateur
+
+Vérification de la compatibilité Steam Deck / ProtonDB
+
+Enrichissement des jeux via SteamSpy
+
+Analyse et suggestions via un LLM local (Ollama) OU via JSON à copier/coller dans un LLM externe
+
+Cache JSON local pour limiter les appels API
+
+Interface web simple (HTML / CSS / JS)
+
+Sauvegarde des suggestions générées (JSON horodaté)
+
 steam_agent/
 │
-├── 📄 main.py                      # Point d'entrée (90 lignes)
-├── 📄 config.py                    # Configuration centralisée
-├── 📄 config_local.py.example      # Template de configuration
-├── 📄 requirements.txt             # Dépendances Python
-├── 📄 README.md                    # Documentation complète
-├── 📄 .gitignore                   # Fichiers à ignorer
+├── main.py                      # Point d'entrée
+├── config.py                    # Configuration centralisée
+├── config_local.py.example      # Template de configuration
+├── requirements.txt             # Dépendances Python
+├── README.md                    # Documentation
+├── .gitignore
 │
-├── 📁 api/                         # Routage HTTP (6 fichiers)
-│   ├── __init__.py
-│   ├── models.py                   # Modèles Pydantic (validation)
-│   ├── steam_routes.py             # Routes API Steam
-│   ├── protondb_routes.py          # Routes API ProtonDB
-│   ├── steamspy_routes.py          # Routes API SteamSpy
-│   ├── ollama_routes.py            # Routes LLM local
-│   └── suggestions_routes.py       # Routes gestion suggestions
+├── api/                         # API REST
+│   ├── models.py                # Modèles Pydantic
+│   ├── steam_routes.py
+│   ├── protondb_routes.py
+│   ├── steamspy_routes.py
+│   ├── ollama_routes.py
+│   └── suggestions_routes.py
 │
-├── 📁 services/                    # Logique métier (6 fichiers)
-│   ├── __init__.py
-│   ├── cache_service.py            # Gestion cache JSON
-│   ├── steam_service.py            # Interactions Steam API
-│   ├── protondb_service.py         # Interactions ProtonDB
-│   ├── steamspy_service.py         # Interactions SteamSpy
-│   ├── ollama_service.py           # Interactions Ollama
-│   └── suggestions_service.py      # Gestion suggestions
+├── services/                    # Logique métier
+│   ├── cache_service.py
+│   ├── steam_service.py
+│   ├── protondb_service.py
+│   ├── steamspy_service.py
+│   ├── ollama_service.py
+│   └── suggestions_service.py
 │
-├── 📁 static/                      # Assets frontend
-│   ├── css/
-│   │   └── style.css               # Styles CSS (120 lignes)
-│   └── js/
-│       └── app.js                  # JavaScript (300 lignes)
+├── static/
+│   ├── css/style.css
+│   └── js/app.js
 │
-├── 📁 templates/                   # Templates HTML
-│   └── index.html                  # HTML pur (120 lignes)
+├── templates/
+│   └── index.html
 │
-├── 📁 cache/                       # Cache (auto-créé)
+├── cache/                       # Cache auto-généré
 │   ├── proton_cache.json
 │   └── genres_cache.json
 │
-└── 📁 suggestions/                 # Suggestions sauvegardées
-    └── (fichiers JSON horodatés)
+└── suggestions/                 # Suggestions sauvegardées
+    └── *.json
+
