@@ -87,7 +87,7 @@
 
         <div class="search-container" style="margin-top: 20px; border: 1px solid #6366f1;">
             <h3 style="margin-bottom: 15px;">📜 Historique des Suggestions</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
                 <div>
                     <h4 style="color: #6366f1; margin-bottom: 10px;">🆕 Nouveautés</h4>
                     <select id="select-nouveautes" style="width: 100%; margin-bottom: 10px;">
@@ -101,6 +101,13 @@
                         <option value="">Aucune sauvegarde</option>
                     </select>
                     <button onclick="loadFromHistory('backlog')" style="width: 100%; background: #f59e0b;">Charger</button>
+                </div>
+                <div>
+                    <h4 style="color: #fbbf24; margin-bottom: 10px;">💬 Ask Anything</h4>
+                    <select id="select-custom" style="width: 100%; margin-bottom: 10px;">
+                        <option value="">Aucune sauvegarde</option>
+                    </select>
+                    <button onclick="loadFromHistory('custom')" style="width: 100%; background: #fbbf24;">Charger</button>
                 </div>
             </div>
         </div>

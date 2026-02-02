@@ -343,7 +343,7 @@ async function renderSuggestions(sugs) {
  * Met à jour les listes d'historique de suggestions
  */
 async function updateHistoryLists() {
-    const categories = ['nouveautes', 'backlog'];
+    const categories = ['nouveautes', 'backlog', 'custom'];
     
     for (const cat of categories) {
         try {
