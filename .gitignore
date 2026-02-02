@@ -36,7 +36,7 @@ ENV/
 
 # Configuration locale (contient des clés sensibles)
 config_local.py
-
+config_local - Copie.py
 # Cache et données
 cache/
 *.json
