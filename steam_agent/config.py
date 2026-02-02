@@ -39,5 +39,5 @@ PORT = 8000
 
 # Configuration Ollama par défaut
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
-DEFAULT_OLLAMA_MODEL = "mistral"
+DEFAULT_OLLAMA_MODEL = "qwen2.5:7b"
 OLLAMA_TIMEOUT = 120.0
