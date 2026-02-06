@@ -16,141 +16,111 @@ class OllamaService:
         model: str, 
         prompt: str
     ) -> List[Dict[str, str]]:
-        """
-        Génère une réponse via Ollama
-        
-        Args:
-            url: URL de l'instance Ollama
-            model: Nom du modèle à utiliser
-            prompt: Prompt à envoyer
-            
-        Returns:
-            Liste de suggestions au format [{"title": "", "reason": ""}]
-            
-        Raises:
-            httpx.TimeoutException: Si la requête timeout
-            httpx.ConnectError: Si impossible de se connecter
-            ValueError: Si la réponse n'est pas un JSON valide
-        """
         endpoint = f"{url}/api/generate"
         
-        # Améliorer le prompt pour forcer le JSON
+        # Le secret ici est de demander de lister d'abord les noms pour "préparer" l'attention du modèle
         json_instruction = """
-IMPORTANT: Tu DOIS répondre UNIQUEMENT avec un tableau JSON contenant EXACTEMENT 5 suggestions.
-Format STRICT attendu (exemple):
+Tu es un expert en recommandation de jeux vidéo.
+Étape 1: Choisis 5 jeux correspondant à la demande.
+Étape 2: Réponds UNIQUEMENT avec un tableau JSON contenant ces 5 jeux.
+
+FORMAT REQUIS:
 [
-  {"title": "Jeu 1", "reason": "Explication courte"},
-  {"title": "Jeu 2", "reason": "Explication courte"},
-  {"title": "Jeu 3", "reason": "Explication courte"},
-  {"title": "Jeu 4", "reason": "Explication courte"},
-  {"title": "Jeu 5", "reason": "Explication courte"}
+  {"title": "Jeu 1", "reason": "Explication"},
+  {"title": "Jeu 2", "reason": "Explication"},
+  {"title": "Jeu 3", "reason": "Explication"},
+  {"title": "Jeu 4", "reason": "Explication"},
+  {"title": "Jeu 5", "reason": "Explication"}
 ]
 
-Ne mets RIEN d'autre que ce tableau JSON. Pas de texte avant, pas de texte après.
-
+INTERDICTION de mettre du texte avant ou après le tableau JSON.
 """
         full_prompt = json_instruction + prompt
+        
+        # --- DEBUG SYSTÉMATIQUE : PROMPT COMPLET ---
+        print("\n" + "="*60)
+        print("🚀 DEBUG: FULL PROMPT SENT TO OLLAMA")
+        print(full_prompt)
+        print("="*60 + "\n")
         
         payload = {
             "model": model,
             "prompt": full_prompt,
             "stream": False,
-            "format": "json",
+            # On commente le format strict qui bride le modèle à 1 seul item
+            # "format": "json", 
             "options": {
-                "temperature": 0.7,
+                "temperature": 0.8,
                 "num_predict": 2000
             }
         }
-        
-        print(f"🔧 Ollama request to: {endpoint}")
-        print(f"🔧 Model: {model}")
-        print(f"🔧 Prompt length: {len(prompt)} chars")
         
         async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
             try:
                 response = await client.post(endpoint, json=payload)
                 
-                print(f"🔧 Ollama response status: {response.status_code}")
-                
                 if response.status_code != 200:
-                    error_text = response.text[:500]  # Limiter la taille
-                    print(f"❌ Ollama error response: {error_text}")
-                    raise ValueError(f"Erreur Ollama HTTP {response.status_code}: {error_text}")
+                    raise ValueError(f"Erreur Ollama HTTP {response.status_code}")
                 
                 data = response.json()
                 llm_response = data.get("response", "")
                 
-                print(f"🔧 LLM response length: {len(llm_response)} chars")
-                print(f"🔧 LLM response preview: {llm_response[:200]}...")
+                # --- DEBUG SYSTÉMATIQUE : RETOUR COMPLET ---
+                print("\n" + "╔" + "═"*58 + "╗")
+                print(f"║ 📥 DEBUG: RAW LLM RESPONSE ({model})")
+                print("╠" + "═"*58 + "╣")
+                print(llm_response)
+                print("╚" + "═"*58 + "╝\n")
                 
-                # Parser le JSON de la réponse
+                # Nettoyage robuste pour extraire le tableau
                 cleaned = OllamaService._clean_json_response(llm_response)
-                
-                print(f"🔧 Cleaned response: {cleaned[:200]}...")
-                
                 suggestions = json.loads(cleaned)
                 
-                # Si c'est un objet avec une clé contenant le tableau (ex: {"titles": [...]} ou {"suggestions": [...]})
+                # Normalisation en liste
                 if isinstance(suggestions, dict):
-                    print(f"⚠️ Réponse est un dict, recherche du tableau...")
-                    # Chercher une clé qui contient un tableau
-                    for key in ['titles', 'suggestions', 'games', 'results', 'items']:
+                    for key in ['suggestions', 'titles', 'games', 'items']:
                         if key in suggestions and isinstance(suggestions[key], list):
-                            print(f"✅ Tableau trouvé dans la clé '{key}'")
                             suggestions = suggestions[key]
                             break
                     else:
-                        # Si aucune clé connue, essayer de convertir l'objet unique en liste
-                        print(f"⚠️ Aucune clé connue trouvée, conversion dict en liste")
                         suggestions = [suggestions]
                 
-                # Valider que c'est bien une liste maintenant
-                if not isinstance(suggestions, list):
-                    raise ValueError(f"La réponse n'est pas une liste mais: {type(suggestions)}")
-                
-                print(f"✅ Parsed {len(suggestions)} suggestions")
+                print(f"✅ Succès : {len(suggestions)} suggestions extraites.")
                 return suggestions
                 
-            except json.JSONDecodeError as e:
-                print(f"❌ JSON parse error: {e}")
-                print(f"❌ Problematic response: {llm_response[:500]}")
-                raise ValueError(f"Impossible de parser le JSON: {str(e)}")
             except Exception as e:
-                print(f"❌ Unexpected error: {type(e).__name__}: {str(e)}")
-                raise
+                print(f"❌ Erreur lors de l'extraction : {str(e)}")
+                # Retourne une liste vide au lieu de faire crash l'app
+                return []
     
     @staticmethod
     def _clean_json_response(response: str) -> str:
-        """
-        Nettoie la réponse pour extraire le JSON pur
-        
-        Args:
-            response: Réponse brute du LLM
-            
-        Returns:
-            JSON nettoyé
-        """
+        """Nettoyage pour isoler le JSON même si le modèle a ajouté du texte"""
         cleaned = response.strip()
         
-        # Retirer les markdown code blocks
-        if cleaned.startswith("```json"):
-            cleaned = cleaned[7:]
-        if cleaned.startswith("```"):
-            cleaned = cleaned[3:]
-        if cleaned.endswith("```"):
-            cleaned = cleaned[:-3]
+        # Supprime les blocs de code Markdown
+        if "```" in cleaned:
+            if "```json" in cleaned:
+                cleaned = cleaned.split("```json")[1].split("```")[0]
+            else:
+                cleaned = cleaned.split("```")[1].split("```")[0]
         
         cleaned = cleaned.strip()
         
-        # Si ça commence par du texte avant le JSON, essayer de l'extraire
-        if not cleaned.startswith('[') and not cleaned.startswith('{'):
-            # Chercher le premier [ ou {
-            start_bracket = cleaned.find('[')
-            start_brace = cleaned.find('{')
+        # Trouve le début du tableau ou de l'objet
+        start_idx = cleaned.find('[')
+        if start_idx == -1:
+            start_idx = cleaned.find('{')
             
-            if start_bracket != -1:
-                cleaned = cleaned[start_bracket:]
-            elif start_brace != -1:
-                cleaned = cleaned[start_brace:]
-        
-        return cleaned.strip()
+        if start_idx != -1:
+            cleaned = cleaned[start_idx:]
+            
+        # Trouve la fin correspondante
+        end_idx = cleaned.rfind(']')
+        if end_idx == -1:
+            end_idx = cleaned.rfind('}')
+            
+        if end_idx != -1:
+            cleaned = cleaned[:end_idx+1]
+            
+        return cleaned
